@@ -1,4 +1,3 @@
-# NBA Statistics Presenter Roadmap
 ## Sprint 1
 - [x] Create README.md
 - [x] Create projectroadmap.md
@@ -8,13 +7,11 @@
 - [x] Test code in repository
 ## Sprint 2 
 - [x] Import necessary libraries
-- [x] Begin devleoping code
-- [x] Make regular updates and commits to code
-- [x] Frequently update README.md and projectroadmap.md
+- [] Begin devleoping code
+- [] Make regular updates and commits to code
+- [] Frequently update README.md and projectroadmap.md
 ## Sprint 3
-- [x] Continue developing and conducting tests on code
-- [x] Add Splash Screen to repo
-- [x] Create PowerPoint and add to repo
-- [x] Schedule Teams presentation
-
-        
+- [] Continue developing and conducting tests on code
+- [] Add Splash Screen to repo
+- [] Create PowerPoint and add to repo
+- [] Schedule Teams presentation
