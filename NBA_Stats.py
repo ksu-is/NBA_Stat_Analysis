@@ -72,9 +72,15 @@ def player_stats():
         career_df['TS%'] = career_df['PTS'] / (2 * (career_df['FGA'] + 0.44 * career_df['FTA']))
         career_df['TS%'] = (career_df['TS%'] * 100)
        
+        # Calculations for Field Goals Missed and Free Throws Missed
+        career_df['FG Missed'] = career_df['FGA'] - career_df['FGM']
+        career_df['FT Missed'] = career_df['FTA'] - career_df['FTM']
+
+        
+
         # Round the stats to one decimal place
         career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%']] = career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%']].round(1)
-
+         
         # Map team columm to team names
         career_df['Team'] = career_df['TEAM_ABBREVIATION']
 

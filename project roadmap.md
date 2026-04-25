@@ -7,7 +7,10 @@
 - [x] Test code in repository
 ## Sprint 2 
 - [x] Import necessary libraries
-- [] Begin devleoping code
+- [x] Begin developing code
+    -[x] Insert Field Goals Missed, Free Throws Missed
+    -[] Insert Credits Formula and Approximate  Value Formula
+    -[] 
 - [] Make regular updates and commits to code
 - [] Frequently update README.md and projectroadmap.md
 ## Sprint 3
