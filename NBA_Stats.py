@@ -102,9 +102,32 @@ def player_stats():
         # Rename SEASON_ID column for clarity
         season_stats.rename(columns={'SEASON_ID': 'Season'}, inplace=True)
 
+        #Prompt the user to select a season or view all seasons
+        while True:
+            view_choice = input("View 'career' stats or 'season' stats? (Enter 'career' or 'season'): ").strip().lower()
+            if view_choice == 'career':
+                # Use full career_df as before
+                display_df = season_stats  # season_stats is already the full filtered DataFrame
+                break
+            elif view_choice == 'season':
+                season_input = input("Enter the season (e.g., '2022-23'): ").strip()
+                # Validate and filter to the specific season
+                if season_input in career_df['SEASON_ID'].values:
+                    display_df = season_stats[season_stats['Season'] == season_input]
+                    if display_df.empty:
+                        print("No stats found for that season. Try again.")
+                        continue
+                    break
+                else:
+                    print("Invalid season or no data for this player in that season. Available seasons: {}".format(', '.join(career_df['SEASON_ID'].unique())))
+                    continue
+            else:
+                print("Invalid choice. Please enter 'career' or 'season'.")
+                continue
+
         # Format the season column to be more readable
-        print("Career Stats for", full_name)
-        print(tabulate(season_stats, headers="keys", tablefmt="pipe", showindex=False))
+        print("Career Stats for", full_name) if view_choice == 'career' else print("Season Stats for", full_name)
+        print(tabulate(display_df, headers="keys", tablefmt="pipe", showindex=False))
        
         # Add a legend for the stats
         print("Legend:\nGP - Games Played \nMPG - Minutes Per Game \nPPG - Points Per Game \nAPG - Assists Per Game \nRPG - Rebounds Per Game \nSPG - Steals Per Game \nBPG - Blocks Per Game \nTOV - Turnovers \nFG% - Field Goal Percentage \nFT% - Free Throw Percentage \n3P% - Three Point Percentage \nTS% - True Shooting Percentage\nAV - Approximate Value")
