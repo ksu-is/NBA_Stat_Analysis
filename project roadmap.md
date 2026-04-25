@@ -9,8 +9,8 @@
 - [x] Import necessary libraries
 - [x] Begin developing code
     -[x] Insert Field Goals Missed, Free Throws Missed
-    -[] Insert Credits Formula and Approximate  Value Formula
-    -[] 
+    -[x] Insert Credits Formula and Approximate Value Formula
+    -[x] Add Approximate Value (AV) to the DataFrame
 - [] Make regular updates and commits to code
 - [] Frequently update README.md and projectroadmap.md
 ## Sprint 3

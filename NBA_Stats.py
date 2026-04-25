@@ -73,13 +73,18 @@ def player_stats():
         career_df['TS%'] = (career_df['TS%'] * 100)
        
         # Calculations for Field Goals Missed and Free Throws Missed
-        career_df['FG Missed'] = career_df['FGA'] - career_df['FGM']
-        career_df['FT Missed'] = career_df['FTA'] - career_df['FTM']
+        FGMissed = career_df['FGA'] - career_df['FGM']
+        FTMissed = career_df['FTA'] - career_df['FTM']
 
-        
+        # Formula for Credit Score: (PPG + APG + RPG + SPG + BPG) - (TOV + FG Missed + FT Missed)
+        credits = (career_df['PPG'] + career_df['APG'] + career_df['RPG'] + career_df['SPG'] + career_df['BPG']) - (career_df['TOV'] + FGMissed + FTMissed)
+
+        #Formula for Approximate Value (AV): (Credit Score^(3/4))/21
+        AV = (abs(credits) ** (3/4)) / 21
+        career_df['AV'] = AV
 
         # Round the stats to one decimal place
-        career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%']] = career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%']].round(1)
+        career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']] = career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']].round(1)
          
         # Map team columm to team names
         career_df['Team'] = career_df['TEAM_ABBREVIATION']
@@ -92,7 +97,7 @@ def player_stats():
                 career_df.loc[(career_df['SEASON_ID'] == season) & (career_df['TEAM_ABBREVIATION'] == 'TOT'), 'Team'] = '/'.join(teams_played)
 
         # Filter the DataFrame to include only the relevant columns
-        season_stats = career_df[['SEASON_ID','Team' ,'GP','MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%']].copy()
+        season_stats = career_df[['SEASON_ID','Team' ,'GP','MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']].copy()
        
         # Rename SEASON_ID column for clarity
         season_stats.rename(columns={'SEASON_ID': 'Season'}, inplace=True)
@@ -102,7 +107,7 @@ def player_stats():
         print(tabulate(season_stats, headers="keys", tablefmt="pipe", showindex=False))
        
         # Add a legend for the stats
-        print("Legend:\nGP - Games Played \nMPG - Minutes Per Game \nPPG - Points Per Game \nAPG - Assists Per Game \nRPG - Rebounds Per Game \nSPG - Steals Per Game \nBPG - Blocks Per Game \nTOV - Turnovers \nFG% - Field Goal Percentage \nFT% - Free Throw Percentage \n3P% - Three Point Percentage \nTS% - True Shooting Percentage")
+        print("Legend:\nGP - Games Played \nMPG - Minutes Per Game \nPPG - Points Per Game \nAPG - Assists Per Game \nRPG - Rebounds Per Game \nSPG - Steals Per Game \nBPG - Blocks Per Game \nTOV - Turnovers \nFG% - Field Goal Percentage \nFT% - Free Throw Percentage \n3P% - Three Point Percentage \nTS% - True Shooting Percentage\nAV - Approximate Value")
        
 # Run the program        
 if __name__ == "__main__":
