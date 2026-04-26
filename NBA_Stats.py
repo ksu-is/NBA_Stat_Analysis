@@ -3,6 +3,11 @@ from nba_api.stats.static import players
 from nba_api.stats.endpoints import playercareerstats
 from tabulate import tabulate
 
+# Web scraping libraries
+import requests
+from bs4 import BeautifulSoup
+
+
 print("Welcome to the NBA Statistics Presenter! \nThis program allows you to search for NBA player stats.")
 
 
@@ -82,6 +87,47 @@ def player_stats():
         #Formula for Approximate Value (AV): (Credit Score^(3/4))/21
         AV = (abs(credits) ** (3/4)) / 21
         career_df['AV'] = AV
+
+        # Salary Scraping from Hoopshype
+        career_df['Salary'] = 'N/A'  # Initialize Salary column with 'N/A'
+        for season in career_df['SEASON_ID'].unique():
+            try:
+                # Create the URL for the relevant season
+                season_format = season.split('-')[0]  
+                url = "https://www.hoopshype.com/salaries/players/?season={season.format}}"
+                # Make a request to the webpage
+                response = requests.get(url, timeout = 2.5)
+                response_html = response.text
+                # Parse the HTML content using BeautifulSoup
+                soup = BeautifulSoup(response_html, 'html.parser')
+                # Find the table containing player salaries
+                salary_table = soup.find('table')
+                if not salary_table:
+                    continue
+                # Loop through the rows of the salary table to find the player's salary 
+                for row in salary_table.find_all('tr')[1:]:  # Skip the header row
+                    length = len(row.find_all('td'))
+                    if length < 3:
+                        continue
+                    player_name = row.find_all('td')[1].text.strip()
+                    player_salary = row.find_all('td')[2].text.strip()
+                    try:
+                        salary = float(player_salary)
+                    except ValueError:
+                        salary = 'N/A'
+                    
+                    # Checking if the player name matches the full name of the player we are looking for
+                    normalized_player_name = full_name.lower().replace(' ', ' ')
+                    if player_name == normalized_player_name:
+                        career_df.loc[career_df['SEASON_ID'] == season, 'Salary'] = player_salary
+                        break  # Exit the loop once the salary is found for this season
+                time.sleep(1)  # Sleep to avoid overwhelming the server with requests
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching salary data for season {season}: {e}")
+                continue
+
+
+
 
         # Round the stats to one decimal place
         career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']] = career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']].round(1)
