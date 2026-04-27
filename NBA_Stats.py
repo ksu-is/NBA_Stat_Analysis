@@ -1,12 +1,10 @@
 import time
-import pandas as pd
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playercareerstats
 from tabulate import tabulate
 
-# Web scraping libraries
-import requests
-from bs4 import BeautifulSoup
+# Web scraping salary libraries
+from nba_history import player_data
 
 
 print("Welcome to the NBA Statistics Presenter! \nThis program allows you to search for NBA player stats.")
@@ -85,54 +83,33 @@ def player_stats():
         # Formula for Credit Score: (PPG + APG + RPG + SPG + BPG) - (TOV + FG Missed + FT Missed)
         credits = (career_df['PPG'] + career_df['APG'] + career_df['RPG'] + career_df['SPG'] + career_df['BPG']) - (career_df['TOV'] + FGMissed + FTMissed)
 
-        #Formula for Approximate Value (AV): (Credit Score^(3/4))/21
+        # Formula for Approximate Value (AV): (Credit Score^(3/4))/21
         AV = (abs(credits) ** (3/4)) / 21
         career_df['AV'] = AV
 
         # Salary Scraping from Hoopshype
         career_df['SL'] = 'N/A'  # Initialize Salary column with 'N/A'
         for season in career_df['SEASON_ID'].unique():
-
-            # Create the URL for the relevant season
-            season_format = season.split('-')[0]  
-            url = f"https://www.hoopshype.com/salaries/players/?season={season_format}"
-            print(url)
-            print(f"Fetching salary data for season {season}...")
-                
+            start_year = int(season.split('-')[0])  # Get the start year of the season
+            end_year = int("20" + season.split('-')[1])  # Get the end year of the season
+            
             try:
-                # Use pandas to read the HTML table directly
-                tables = pd.read_html(url)
-                salary_df = tables[0]
+                # Get salary data for this season (returns DataFrame for all players)
+                salary_df = player_data.scrape_player_salaries(start_year=start_year, end_year=end_year, sleep_time=1.5)
                 
-                # Rename columns to match table structure
-                salary_df.columns = ['Rank', 'Player', 'Team', 'Salary', 'COL5', 'COL6']
+                # Search for this player in the salary data
+                player_salary = salary_df[salary_df['Player'].str.lower() == full_name.lower()]
                 
-                # Keep only Player and Salary columns
-                salary_df = salary_df[['Player', 'Salary']].copy()
-                
-                # Clean the salary data: remove $, commas, and convert to int
-                salary_df['Salary'] = salary_df['Salary'].replace(r'[\$,]', '', regex=True).astype(float).astype(int)
-                
-                # Search for the player in this season's salary data
-                salary_found = False
-                for idx, row in salary_df.iterrows():
-                    if row['Player'].lower() == full_name.lower():
-                        salary = row['Salary']
-                        print(f"✓ Salary found for {full_name} in season {season}: ${salary:,}")
-                        career_df.loc[career_df['SEASON_ID'] == season, 'SL'] = salary
-                        salary_found = True
-                        break
-                
-                if not salary_found:
+                if not player_salary.empty:
+                    # Extract the salary value (adjust column name if needed)
+                    salary = player_salary.iloc[0]['Salary']
+                    career_df.loc[career_df['SEASON_ID'] == season, 'SL'] = salary
+                    print(f"✓ Salary found for {full_name} in season {season}: ${salary:,}")
+                else:
                     print(f"✗ No salary match found for {full_name} in season {season}.")
-                
-                time.sleep(1)  # Be respectful to the server
-                
             except Exception as e:
                 print(f"Error fetching salary data for season {season}: {e}")
-                continue
-
-
+            
 
 
         # Round the stats to one decimal place
