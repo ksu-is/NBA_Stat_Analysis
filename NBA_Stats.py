@@ -1,11 +1,15 @@
 import time
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playercareerstats
+from numpy import rint
 from tabulate import tabulate
 
 # Web scraping salary libraries
-from nba_history import player_data
-
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 print("Welcome to the NBA Statistics Presenter! \nThis program allows you to search for NBA player stats.")
 
@@ -89,28 +93,49 @@ def player_stats():
 
         # Salary Scraping from Hoopshype
         career_df['SL'] = 'N/A'  # Initialize Salary column with 'N/A'
-        for season in career_df['SEASON_ID'].unique():
-            start_year = int(season.split('-')[0])  # Get the start year of the season
-            end_year = int("20" + season.split('-')[1])  # Get the end year of the season
-            
-            try:
-                # Get salary data for this season (returns DataFrame for all players)
-                salary_df = player_data.scrape_player_salaries(start_year=start_year, end_year=end_year, sleep_time=1.5)
-                
-                # Search for this player in the salary data
-                player_salary = salary_df[salary_df['Player'].str.lower() == full_name.lower()]
-                
-                if not player_salary.empty:
-                    # Extract the salary value (adjust column name if needed)
-                    salary = player_salary.iloc[0]['Salary']
-                    career_df.loc[career_df['SEASON_ID'] == season, 'SL'] = salary
-                    print(f"✓ Salary found for {full_name} in season {season}: ${salary:,}")
-                else:
-                    print(f"✗ No salary match found for {full_name} in season {season}.")
-            except Exception as e:
-                print(f"Error fetching salary data for season {season}: {e}")
-            
+        driver = None
+        try:
+            driver = webdriver.Chrome()  # Make sure chromedriver is in PATH or specify path
+            for season in career_df['SEASON_ID'].unique():
+                start_year = int(season.split('-')[0])
+                url = f"https://www.hoopshype.com/salaries/players/?season={start_year}"
 
+                print(f"Fetching salary data from {url}")
+                driver.get(url)
+
+                try:
+                    WebDriverWait(driver, 15).until(
+                        EC.presence_of_element_located((By.XPATH, '//td[contains(@class,"name")]'))
+                    )
+                except TimeoutException:
+                    print(f"Timeout loading salary page for {season}")
+                    continue
+
+                player_elements = driver.find_elements(By.XPATH, '//td[contains(@class,"name")]')
+                salary_elements = driver.find_elements(By.XPATH, '//td[contains(@class,"hh-salaries-sorted")]')
+                if not salary_elements:
+                    salary_elements = driver.find_elements(By.XPATH, '//td[contains(@class,"salary")]')
+
+                players_list = [p.text.strip() for p in player_elements]
+                salaries_list = [s.text.strip() for s in salary_elements]
+
+                if len(players_list) != len(salaries_list):
+                    print(f"Warning: player/salary count mismatch for {season}: {len(players_list)} names, {len(salaries_list)} salaries")
+
+                for player_name, salary in zip(players_list[1:], salaries_list[1:]):
+                    if player_name.lower() == full_name.lower():
+                        career_df.loc[career_df['SEASON_ID'] == season, 'SL'] = salary
+                        print(f"✓ Salary found for {full_name} in season {season}: {salary}")
+                        break
+                else:
+                    print(f"✗ No salary match found for {full_name} in season {season}")
+
+                time.sleep(1.5)
+        except Exception as e:
+            print(f"Salary scraping error: {e}")
+        finally:
+            if driver:
+                driver.quit()
 
         # Round the stats to one decimal place
         career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']] = career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']].round(1)
