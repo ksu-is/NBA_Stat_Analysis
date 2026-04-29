@@ -1,13 +1,51 @@
 import time
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playercareerstats
-from numpy import rint
 from tabulate import tabulate
 
-# Web scraping salary libraries
+# Imports required for the basketball reference ID generation
+import re
 from sportsipy.nba.roster import Player
 
 print("Welcome to the NBA Statistics Presenter! \nThis program allows you to search for NBA player stats.")
+
+# Functions to generate basketball reference ID and get salary data
+#Removes any non-alphabetic characters from the player's name and converts it to lowercase for consistent ID generation.(Ex: O'Neal -> oneal)
+def clean_name(name):
+    return re.sub(r'[^a-zA-Z]', '', name).lower()
+
+ # Generate the basketball reference ID based on the player's full name
+def generate_basketball_reference_id(full_name, max_sequence = 5):
+    cleaned_name = clean_name(full_name)
+
+    #Checks if the cleaned name has at least two characters (first and last name) to generate a valid ID. If not, it returns an empty string or a default value. This is important to prevent errors when trying to access the basketball reference page for players with very short names or names that don't follow the standard format.
+    if len(cleaned_name) < 2:
+        return []  
+    
+    #Generates the basketball reference ID using the first five letters of the last name and the first two letters of the first name, 
+    last_name = cleaned_name.split()[-1]  # Get the last name
+    first_name = cleaned_name.split()[0]  # Get the first name
+    print(first_name, last_name)
+    #Checks if the last name has at least 5 characters and the first name has at least 2 characters to generate a valid ID. If not, it returns an empty string or a default value. 
+    if not last_name or not first_name:
+        return [] 
+    
+    last_name_part = last_name[:5]  # Take first 5 letters of last name
+    first_name_part = first_name[:2]  # Take first 2 letters of first name
+
+    #Combines the parts to create the base ID and appends '01' to create the full basketball reference ID. The '01' is a common suffix used in basketball reference IDs to differentiate between players with similar names. If there are multiple players with the same name, they would have '02', '03', etc. as suffixes.
+    return [f'{last_name_part}{first_name_part}{sequence:02d}' for sequence in range(1, max_sequence + 1)]  # Generate IDs with suffixes from 01 to max_sequence
+
+# Gets the salary data for the player using the sportsipy library and the generated basketball reference ID. 
+def get_salary_for_player(full_name: str):
+    for br_id in generate_basketball_reference_id(full_name, max_sequence=5):
+        player = Player(br_id)
+        if not player.name:
+            continue
+        if full_name.lower() not in player.name.lower():
+            continue
+        return player.salary, br_id
+    return None, None
 
 
 # Initialize the statistic finder function
@@ -88,12 +126,16 @@ def player_stats():
         career_df['AV'] = AV
 
         # Salary Of NBA players is not available through the nba_api, so we will use the sportsipy library to scrape the salary data from basketball reference. 
-        career_df['SL'] = 'N/A'  # Initialize Salary column with 'N/A'
-        
-        
+        salary_value, br_id = get_salary_for_player(full_name)
+        if salary_value is not None:
+            career_df['Salary'] = salary_value
+            print(f"Salary found for {full_name} using BR ID {br_id}: ${salary_value}")
+        else:
+            career_df['Salary'] = 'N/A'
+            print(f"Salary not found for {full_name}. Tried Basketball-Reference ID candidates.")
 
         # Round the stats to one decimal place
-        career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']] = career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV']].round(1)
+        career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV', 'Salary']] = career_df[['MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV', 'Salary']].round(1)
          
         # Map team columm to team names
         career_df['Team'] = career_df['TEAM_ABBREVIATION']
@@ -106,7 +148,7 @@ def player_stats():
                 career_df.loc[(career_df['SEASON_ID'] == season) & (career_df['TEAM_ABBREVIATION'] == 'TOT'), 'Team'] = '/'.join(teams_played)
 
         # Filter the DataFrame to include only the relevant columns
-        season_stats = career_df[['SEASON_ID','Team' ,'GP','MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV', 'SL']].copy()
+        season_stats = career_df[['SEASON_ID','Team' ,'GP','MPG','PPG', 'APG', 'RPG', 'SPG', 'BPG', 'TOV','FG%','FT%','3P%','TS%', 'AV', 'Salary']].copy()
        
         # Rename SEASON_ID column for clarity
         season_stats.rename(columns={'SEASON_ID': 'Season'}, inplace=True)
