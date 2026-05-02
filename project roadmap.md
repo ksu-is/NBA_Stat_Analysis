@@ -12,8 +12,8 @@
     -[x] Insert Credits Formula and Approximate Value Formula
     -[x] Add Approximate Value (AV) to the DataFrame
     -[x] Add Option for Individual Seasons or whole Career
-    -[] Add Player Salaries
-- []x Make regular updates and commits to code
+    -[x] Add Player Salaries
+- [x] Make regular updates and commits to code
 - [x] Frequently update README.md and projectroadmap.md
 ## Sprint 3
 - [x] Continue developing and conducting tests on code
