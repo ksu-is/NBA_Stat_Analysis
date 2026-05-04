@@ -342,18 +342,17 @@ def player_stats():
         plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black', alpha=0.3)
         # Scatter plot
         plt.scatter(x, y, c=range(len(career_df)), cmap='tab20', s=100)
-        # plt.colorbar(label='Career Progression')
         # Adds Average AV to the Scatter plot
         avg_av = career_df['AV'].mean()
         plt.axhline(avg_av, color='red', linestyle=':', label=f'Avg AV ({avg_av:.1f})')
+        plt.text(0.95, 0.95, f'Avg AV: {avg_av:.1f}', transform=plt.gca().transAxes, fontsize=10, verticalalignment='top', horizontalalignment='right')
         # Regression Line
         z = np.polyfit(x.dropna(), y.dropna(), 1) # degree 1 = linear
         m, b = z  # slope and intercept
         p = np.poly1d(z)
         plt.plot(x, p(x), linestyle='--')
         equation = f"y = {m:.2f}x + {b:.2f}"
-        plt.text(0.05, 0.95, equation, transform=plt.gca().transAxes, fontsize=10, verticalalignment='top'
-        )
+        plt.text(0.05, 0.95, equation, transform=plt.gca().transAxes, fontsize=10, verticalalignment='top', horizontalalignment='left')
 
         #heatmap of the stats 
         heatmap_df = career_df[['SEASON_ID', 'AV', 'Salary_float', 'VD']].copy()
@@ -373,28 +372,12 @@ def player_stats():
         else:
             print(f":\n[NOTE] Skipping heatmap: No salary data available for {full_name}'s era")
 
-
-        #Prompt the user to select a season or view all seasons
-        while True:
-            display_df = season_stats  # season_stats is already the full filtered DataFrame
-            if heatmap_df.std().sum() > 0:
-                view_choice = input("Would you like to see a heatmap regarding Contract Efficiency & a scatter plot comparing Approxiamate Value and Salary(y/n): ").strip().lower()
-                if view_choice == "y":
-                    plt.show()
-                    break
-                elif view_choice =='n':
-                    break
-                else:
-                    print("Invalid input, try again.")
-            break
-
-
         # Format the season column to be more readable
         print("Career Stats for", full_name) 
-        print(tabulate(display_df, headers="keys", tablefmt="pipe", showindex=False))
+        print(tabulate(season_stats, headers="keys", tablefmt="pipe", showindex=False))
         # Add a legend for the stats
         print("Legend:\nGP - Games Played \nMPG - Minutes Per Game \nPPG - Points Per Game \nAPG - Assists Per Game \nRPG - Rebounds Per Game \nSPG - Steals Per Game \nBPG - Blocks Per Game \nTOV - Turnovers \nFG% - Field Goal Percentage \nFT% - Free Throw Percentage \n3P% - Three Point Percentage \nTS% - True Shooting Percentage\nAV - Approximate Value \nCE - Career Efficiency \nSL - Salary \nVD - Value over Dollar (AV per million dollars of salary)")
-       
+        plt.show()
 # Run the program        
 if __name__ == "__main__":
     player_stats()
