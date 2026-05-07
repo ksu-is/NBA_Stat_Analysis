@@ -15,8 +15,8 @@ Python 3.x
 ## How to use
 1. Clone repository
    ```
-   git clone https://github.com/ksu-is/NBA_Stats.git
-   cd NBA_Stats
+   git clone https://github.com/ksu-is/NBA_Stat_Analysis
+   cd NBA_Stat_Analysis
      
 2. Install Data Processing Libraries
    ```
